@@ -1,3 +1,14 @@
+# lxpanel-dual-clock
+Custom LXDE panel for Debian 13 with Local/UTC dual clock support.
+
+## My Installation
+1. ./configure --enable-gtk2
+2. make
+3. sudo checkinstall
+4. sudo apt install ./XXXXX.deb
+
+
+
 LXPanel is a lightweight X11 desktop panel.
 
 To build this program you need some development packages:
