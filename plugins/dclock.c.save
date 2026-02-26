@@ -173,55 +173,41 @@ static void dclock_timer_set(DClockPlugin * dc, struct timeval *current_time)
  * Also used during initialization and configuration change to do a redraw. */
 static gboolean dclock_update_display(DClockPlugin * dc)
 {
-        /* Wyznaczenie aktualnego czasu */
+    /* Determine the current time. */
     struct timeval now;
-    
-    /* TO SĄ TWOJE "PUDEŁKA" (zmienne lokalne) */
-    struct tm local_tm; 
-    struct tm utc_tm;
-
-    /* To są wskaźniki, które będą na te pudełka wskazywać (opcjonalne, ale ułatwia życie) */
-    struct tm * local_time;
-    struct tm * utc_time;
+    struct tm * current_time;
+    struct tm * utc_time; // Dodaj tę linię
 
     if (g_source_is_destroyed(g_main_current_source()))
         return FALSE;
 
     dclock_timer_set(dc, &now);
+    current_time = localtime(&now.tv_sec);
+    utc_time = gmtime(&now.tv_sec); // Dodaj tę linię, pobiera czas UTC
 
-    /* Funkcja bierze sekundy i wpisuje wynik do Twoich pudełek */
-    local_time = localtime_r(&now.tv_sec, &local_tm);
-    utc_time = gmtime_r(&now.tv_sec, &utc_tm);
-
-    /* Bufory na teksty */
+    /* Determine the content of the clock label and tooltip. */
     char clock_value[128];
+    char tooltip_value[64];
     char local_s[64];
     char utc_s[64];
-    char tooltip_value[64];
 
-    /* 1. Formatowanie czasu lokalnego (według ustawień użytkownika) */
-    local_s[0] = '\0';
+    clock_value[0] = '\0';
     if (dc->clock_format != NULL)
-        strftime(local_s, sizeof(local_s), dc->clock_format, local_time);
+        strftime(clock_value, sizeof(clock_value), dc->clock_format, current_time);
+     /* Formatuj czas UTC */
+        strftime(utc_s, sizeof(utc_s), " UTC: %H:%M", utc_time); 
 
-    /* 2. Formatowanie czasu UTC (na sztywno lub możesz też użyć formatu) */
-    utc_s[0] = '\0';
-    strftime(utc_s, sizeof(utc_s), "%H:%M", utc_time); 
 
-    /* 3. Połączenie obu wartości w jedną linię */
-    snprintf(clock_value, sizeof(clock_value), "%s [%s UTC]", local_s, utc_s);
-
-    /* 4. Obsługa podpowiedzi (tooltip) */
     tooltip_value[0] = '\0';
     if (dc->tooltip_format != NULL)
-        strftime(tooltip_value, sizeof(tooltip_value), dc->tooltip_format, utc_time);
+        strftime(tooltip_value, sizeof(tooltip_value), dc->tooltip_format, current_time);
 
-    /* Dalej następuje reszta oryginalnego kodu (sprawdzanie zmian, odświeżanie labela) */
+    /* When we write the clock value, it causes the panel to do a full relayout.
+     * Since this function may be called too often while the timing experiment is underway,
+     * we take the trouble to check if the string actually changed first. */
     if (( ! dc->icon_only)
     && ((dc->prev_clock_value == NULL) || (strcmp(dc->prev_clock_value, clock_value) != 0)))
     {
-        // Tutaj kod powinien iść dalej tak jak w oryginale...
-
         /* Convert "\n" escapes in the user's format string to newline characters. */
         char * newlines_converted = NULL;
         if (strstr(clock_value, "\\n") != NULL)

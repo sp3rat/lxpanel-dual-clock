@@ -132,7 +132,7 @@ static GtkWidget *pager_constructor(LXPanel *panel, config_setting_t *settings)
 #if GTK_CHECK_VERSION(3, 0, 0)
     w = wnck_pager_new();
 #else
-    w = wnck_pager_new(NULL);
+    w = wnck_pager_new();
 #endif
     g_return_val_if_fail(w != NULL, NULL);
     d = g_new(PagerData, 1);
